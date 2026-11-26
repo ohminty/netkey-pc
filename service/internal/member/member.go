@@ -173,6 +173,10 @@ func (m *Member) Join(ctx context.Context, code, name string) (string, error) {
 		HostPub   string `json:"host_pub"`
 		Status    string `json:"status"`
 	}
+	seq, err := m.skipOldEvents(ctx)
+	if err != nil {
+		return "", err
+	}
 	if err := m.hub.Call(ctx, "POST", "/v1/join", map[string]any{"code": code, "pub": pub, "name": name}, &r); err != nil {
 		return "", err
 	}
@@ -184,7 +188,7 @@ func (m *Member) Join(ctx context.Context, code, name string) (string, error) {
 	}
 	m.mu.Lock()
 	m.st = State{Status: "joining", HubParty: r.Party, PartyName: CleanName(r.PartyName), HostPub: r.HostPub,
-		Priv: priv, Pub: pub, Name: name}
+		Priv: priv, Pub: pub, Name: name, HubSeq: seq}
 	m.save()
 	m.notes = nil
 	m.note("Asked %s to let you in. The host sees the key check %s", m.st.PartyName, hub.VerifyWords(pub))
@@ -217,6 +221,10 @@ func (m *Member) JoinListing(ctx context.Context, listing, name string) (string,
 		Status    string `json:"status"`
 		Listing   string `json:"listing"`
 	}
+	seq, err := m.skipOldEvents(ctx)
+	if err != nil {
+		return "", err
+	}
 	if err := m.hub.Call(ctx, "POST", "/v1/join", map[string]any{"listing": listing, "pub": pub, "name": CleanName(name)},
 		&r); err != nil {
 		return "", err
@@ -229,7 +237,7 @@ func (m *Member) JoinListing(ctx context.Context, listing, name string) (string,
 	}
 	m.mu.Lock()
 	m.st = State{Status: "joining", HubParty: r.Party, PartyName: CleanName(r.PartyName), HostPub: r.HostPub,
-		Priv: priv, Pub: pub, Name: CleanName(name), Public: true, Listing: r.Listing}
+		Priv: priv, Pub: pub, Name: CleanName(name), Public: true, Listing: r.Listing, HubSeq: seq}
 	if m.st.Listing == "" {
 		m.st.Listing = listing
 	}
@@ -238,6 +246,18 @@ func (m *Member) JoinListing(ctx context.Context, listing, name string) (string,
 	m.note("Asked to join %s. The host sees the key check %s", m.st.PartyName, hub.VerifyWords(pub))
 	m.mu.Unlock()
 	return fmt.Sprintf("Asked to join %s", CleanName(r.PartyName)), nil
+}
+
+// skipOldEvents moves past the hub events already waiting, so that only answers to the new request count.
+func (m *Member) skipOldEvents(ctx context.Context) (int64, error) {
+	m.mu.Lock()
+	after := m.st.HubSeq
+	m.mu.Unlock()
+	seq, err := m.hub.SkipEvents(ctx, after)
+	if err != nil {
+		return after, err
+	}
+	return seq, nil
 }
 
 // Leave leaves the party (or cancels a join request).
@@ -270,7 +290,7 @@ func (m *Member) drop(msg string) {
 		m.sw.Remove(m.port)
 		m.port = nil
 	}
-	m.st = State{}
+	m.st = State{HubSeq: m.st.HubSeq} // the event sequence carries over to the next party, like the box's
 	m.online, m.view, m.err, m.rtt, m.lastOK = false, nil, "", 0, time.Time{}
 	m.save()
 	m.note("%s", msg)

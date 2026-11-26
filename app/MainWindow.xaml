@@ -291,6 +291,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition />
                                                 <RowDefinition />
+                                                <RowDefinition />
                                             </Grid.RowDefinitions>
                                             <FontIcon Glyph="&#xE839;" FontSize="18" VerticalAlignment="Center" />
                                             <StackPanel Grid.Column="1">
@@ -309,6 +310,15 @@
                                             <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                 <Ellipse x:Name="LsDot" Width="8" Height="8" VerticalAlignment="Center" />
                                                 <TextBlock x:Name="LsState" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <FontIcon Grid.Row="2" Glyph="&#xE756;" FontSize="18" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Row="2" Grid.Column="1">
+                                                <TextBlock Text="DOSBox IPX" />
+                                                <TextBlock Text="DOSBox, DOSBox-X, DOSBox Staging" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Ellipse x:Name="IpxDot" Width="8" Height="8" VerticalAlignment="Center" />
+                                                <TextBlock x:Name="IpxState" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -469,8 +479,53 @@
                                     </Grid.ColumnDefinitions>
                                     <FontIcon Glyph="&#xE756;" FontSize="20" VerticalAlignment="Center" />
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="DOSBox-X" />
-                                        <TextBlock Text="NE2000 card through Npcap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="DOSBox: IPX games, the easy way" />
+                                        <TextBlock Text="DOSBox, DOSBox-X or DOSBox Staging. Nothing to install." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" CornerRadius="10" Padding="10,2" VerticalAlignment="Center" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}">
+                                        <TextBlock Text="Recommended" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Most DOS network games use IPX: Doom, Duke Nukem 3D, Warcraft II, Command &amp; Conquer, Descent, Rise of the Triad… DOSBox can carry IPX to NetKey by itself, so you need no extra drivers in DOS." />
+                                <local:Step Number="1" Text="Open your DOSBox config file (dosbox-x.conf, dosbox.conf or dosbox-staging.conf), find the [ipx] section and change ipx = false to ipx = true. Then restart DOSBox: it reads the config when it starts." />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="IpxConf" Style="{StaticResource Mono}" Text="[ipx]&#10;ipx=true" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Click="CopyIpxConf_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+                                <local:Step Number="2" Text="In DOSBox, connect to NetKey (it's on this PC). DOSBox answers that it's connected:" />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="IpxCmd" Style="{StaticResource Mono}" Text="IPXNET CONNECT 127.0.0.1" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8" Click="CopyIpxCmd_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+                                <local:Step Number="3" Text="Start your game and choose an IPX network game, for example in Doom: IPXSETUP -nodes 2 (the number of players). NetKey's Party page shows when your DOSBox is connected." />
+                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Tip: put IPXNET CONNECT 127.0.0.1 in the [autoexec] section of the config, so DOSBox connects by itself. Use connect, not IPXNET STARTSERVER: NetKey is the server. Two DOSBox windows on this PC can also play each other this way." />
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE756;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="DOSBox-X: full network card (advanced)" />
+                                        <TextBlock Text="For DOS programs that need NetBEUI or TCP/IP. Needs Npcap and Novell's DOS drivers." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </StackPanel>
                                     <Border x:Name="NpcapChip" Grid.Column="2" CornerRadius="10" Padding="10,2" VerticalAlignment="Center">
                                         <TextBlock x:Name="NpcapChipText" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />

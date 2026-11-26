@@ -432,6 +432,18 @@ public sealed partial class MainWindow : Window
         }
         One("tap", s["adapter"].Bool("connected"), s["adapter"].Str("error"), TapDot, TapState);
         One("86box", s["lswitch"].Bool("open"), s["lswitch"].Str("error"), LsDot, LsState);
+
+        // DOSBox IPX: how many DOSBox are connected, and whether they're sending
+        var ipx = s["ipx"];
+        var clients = (ipx?["clients"] as JsonArray)?.Count ?? 0;
+        One("ipx", ipx.Bool("listening"), ipx.Str("error"), IpxDot, IpxState);
+        if (ipx.Bool("listening") && IpxState.Text != "Not available")
+        {
+            var n = clients == 1 ? "1 DOSBox" : $"{clients} DOSBox";
+            IpxState.Text = clients == 0 ? "Waiting for DOSBox"
+                : IpxState.Text == "Traffic flowing" ? $"{n} · traffic flowing" : $"{n} connected";
+            if (clients > 0 && IpxState.Text.EndsWith("connected")) IpxDot.Fill = Res("AccentFillColorDefaultBrush");
+        }
     }
 
     private void ShowTest(JsonObject s)
@@ -886,6 +898,10 @@ public sealed partial class MainWindow : Window
     private void CopyDosbox_Click(object sender, RoutedEventArgs e) => Copy(DosboxConf.Text.Replace("\n", "\r\n"));
 
     private void CopySecret_Click(object sender, RoutedEventArgs e) => Copy(_secret);
+
+    private void CopyIpxConf_Click(object sender, RoutedEventArgs e) => Copy("[ipx]\r\nipx=true");
+
+    private void CopyIpxCmd_Click(object sender, RoutedEventArgs e) => Copy("IPXNET CONNECT 127.0.0.1");
 
     private void CopyNetCfg_Click(object sender, RoutedEventArgs e) => Copy(NetCfg.Text.Replace("\n", "\r\n"));
 }

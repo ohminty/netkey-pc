@@ -224,6 +224,31 @@ func (c *Client) Events(ctx context.Context, after int64) ([]Event, error) {
 	return r.Events, err
 }
 
+// SkipEvents reads past every event already waiting after seq, without acting on them, and returns the last
+// sequence number. Call it before asking to join: the hub keeps old events, and an "approved" from an earlier
+// membership of the same party must not count as an answer to a new request.
+func (c *Client) SkipEvents(ctx context.Context, after int64) (int64, error) {
+	for i := 0; i < 1000; i++ {
+		var r struct {
+			Events []Event `json:"events"`
+			Last   int64   `json:"last"`
+		}
+		if err := c.CallTimeout(ctx, "GET", fmt.Sprintf("/v1/events?after=%d&wait=0", after), nil, &r,
+			15*time.Second); err != nil {
+			return after, err
+		}
+		if len(r.Events) == 0 {
+			return after, nil
+		}
+		for _, e := range r.Events {
+			if e.Seq > after {
+				after = e.Seq
+			}
+		}
+	}
+	return after, nil
+}
+
 func writeFileAtomic(path string, data []byte) error {
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {

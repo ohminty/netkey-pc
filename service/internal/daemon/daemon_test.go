@@ -14,6 +14,7 @@ func TestControlChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(dir)
+	IPXAddr = "127.0.0.1:0" // port 213 needs root off Windows
 	d, err := New(dir, t.Logf)
 	if err != nil {
 		t.Fatal(err)
@@ -42,6 +43,9 @@ func TestControlChannel(t *testing.T) {
 	st := call(map[string]any{"op": "status"})
 	if st["ok"] != true || st["party"].(map[string]any)["status"] != "" {
 		t.Fatalf("status: %v", st)
+	}
+	if ix, _ := st["ipx"].(map[string]any); ix["listening"] != true {
+		t.Fatalf("the DOSBox IPX server must be listening: %v", st["ipx"])
 	}
 	if s, _ := st["secret"].(string); !strings.HasPrefix(s, "netkey-") {
 		t.Fatalf("no Local Switch secret: %v", st["secret"])

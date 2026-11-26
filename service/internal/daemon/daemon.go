@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"netkey.no/pc/internal/hub"
+	"netkey.no/pc/internal/ipx"
 	"netkey.no/pc/internal/lswitch"
 	"netkey.no/pc/internal/member"
 	"netkey.no/pc/internal/probe"
@@ -53,6 +54,8 @@ type Daemon struct {
 	tapErr   string
 	ls       *lswitch.LSwitch
 	lsErr    string
+	ipx      *ipx.Port // DOSBox's IPX tunnel (IPXNET CONNECT 127.0.0.1): always listening
+	ipxErr   string
 	warnings []string
 	testing  bool
 	lastTest map[string]any
@@ -155,6 +158,7 @@ func loadOrMake(path string, mk func() string) string {
 
 // Run keeps the service going until ctx ends; l is the control listener.
 func (d *Daemon) Run(ctx context.Context, l net.Listener) {
+	d.openIPX()
 	go d.m.Run(ctx)
 	go d.serve(ctx, l)
 	go d.probeRelays(ctx)
@@ -165,11 +169,35 @@ func (d *Daemon) Run(ctx context.Context, l net.Listener) {
 		select {
 		case <-ctx.Done():
 			d.closePorts()
+			if d.ipx != nil {
+				d.sw.Remove(d.ipx)
+				d.ipx.Close()
+			}
 			l.Close()
 			return
 		case <-t.C:
 		}
 	}
+}
+
+// IPXAddr is where DOSBox connects (IPXNET CONNECT 127.0.0.1). Tests change it.
+var IPXAddr = fmt.Sprintf("127.0.0.1:%d", ipx.DefaultPort)
+
+// openIPX starts the IPX server for DOSBox. It listens in and out of parties, so DOSBox can connect before the party
+// starts; its frames only go anywhere while the party port exists.
+func (d *Daemon) openIPX() {
+	p, err := ipx.Open(IPXAddr, d.logf)
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if err != nil {
+		d.ipxErr = err.Error()
+		d.logf("DOSBox IPX server: %v", err)
+		return
+	}
+	p.OnFrame = func(f []byte) { d.sw.Input(p, f) }
+	d.sw.Add(p)
+	d.ipx = p
+	d.logf("DOSBox IPX server listening on %s", p.Addr())
 }
 
 // probeRelays measures the relays now and every 10 minutes (the box does the same): the hub uses the times to pick
@@ -444,12 +472,20 @@ func (d *Daemon) status() map[string]any {
 		"hub":        map[string]any{"online": st.HubOnline, "error": st.HubError},
 		"adapter":    map[string]any{"connected": d.tap != nil, "error": d.tapErr, "name": tap.AdapterName},
 		"lswitch":    map[string]any{"open": d.ls != nil, "error": d.lsErr},
+		"ipx":        d.ipxStatus(),
 		"notes":      st.Notes,
 		"warnings":   append([]string(nil), d.warnings...),
 		"frames":     d.sw.Stats(),
 		"test":       d.lastTest,
 		"testing":    d.testing,
 	}
+}
+
+func (d *Daemon) ipxStatus() map[string]any {
+	if d.ipx == nil {
+		return map[string]any{"listening": false, "error": d.ipxErr, "clients": []ipx.ClientInfo{}}
+	}
+	return map[string]any{"listening": true, "port": d.ipx.Addr().Port, "error": "", "clients": d.ipx.Clients()}
 }
 
 func lastOK(st member.Status) string {

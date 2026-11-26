@@ -1,0 +1,9 @@
+NetKey for Windows
+Copyright 2026 The NetKey authors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+"NetKey" and the NetKey logo are the project's name and mark. The license covers the code, not the name or
+logo: forks and modified builds must use a different name and logo.
+
+This product bundles third-party software under their own licenses; see installer/THIRD-PARTY.txt.

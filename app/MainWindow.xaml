@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="NetKey.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:NetKey"
+    Title="NetKey">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="TitleBar" Padding="14,0,140,0">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Image x:Name="TitleIcon" Width="16" Height="16" />
+                <TextBlock Text="NetKey" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <NavigationView x:Name="Nav" Grid.Row="1" PaneDisplayMode="Left" IsBackButtonVisible="Collapsed"
+                        IsPaneToggleButtonVisible="False" OpenPaneLength="210" IsSettingsVisible="True"
+                        SelectionChanged="Nav_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="NavParty" Content="Party" Tag="party">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE968;" /></NavigationViewItem.Icon>
+                    <NavigationViewItem.InfoBadge>
+                        <InfoBadge x:Name="NavBadge" Visibility="Collapsed" />
+                    </NavigationViewItem.InfoBadge>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavFind" Content="Find a party" Tag="find">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE721;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Emulators" Tag="emulators">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE7FC;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <Grid x:Name="PagesGrid">
+                <!-- ================= PARTY ================= -->
+                <Grid x:Name="PartyPage">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition x:Name="ChatColumn" Width="0" />
+                    </Grid.ColumnDefinitions>
+                    <ScrollViewer x:Name="PartyScroll" Padding="32,20,24,32">
+                        <StackPanel x:Name="PartyColumn" Spacing="16" MaxWidth="820" HorizontalAlignment="Center">
+                            <InfoBar x:Name="ServiceBar" Visibility="Collapsed" Severity="Error" IsClosable="False"
+                                     Title="The NetKey service isn't running"
+                                     Message="Start “NetKey” in Windows Services, or reinstall NetKey." />
+                            <InfoBar x:Name="NoteBar" Visibility="Collapsed" Closed="Bar_Closed" />
+                            <InfoBar x:Name="ErrorBar" Visibility="Collapsed" Severity="Error" Closed="Bar_Closed" Title="That didn't work" />
+                            <InfoBar x:Name="WarnBar" Visibility="Collapsed" Severity="Warning" Closed="Bar_Closed"
+                                     Title="Two machines share a MAC address" />
+
+                            <!-- idle -->
+                            <StackPanel x:Name="IdleView" Spacing="20">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Join a LAN party" Style="{StaticResource TitleTextBlockStyle}" />
+                                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Text="Your emulators and virtual machines join the party's network, as if you plugged into the host's switch." />
+                                </StackPanel>
+                                <Border Style="{StaticResource Card}" Padding="24">
+                                    <StackPanel Spacing="16">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Got an invite code?" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox x:Name="CodeBox" FontFamily="Cascadia Mono, Consolas" FontSize="16"
+                                                         PlaceholderText="KEY-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                                                         TextChanged="CodeBox_TextChanged" KeyDown="CodeBox_KeyDown" IsSpellCheckEnabled="False" />
+                                                <Button Grid.Column="1" Click="Paste_Click" ToolTipService.ToolTip="Paste from the clipboard">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon Glyph="&#xE77F;" FontSize="14" />
+                                                        <TextBlock Text="Paste" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <TextBlock x:Name="CodeHint" Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       Text="The host finds it on their Parties page. It starts with KEY-." />
+                                        </StackPanel>
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <FontIcon Glyph="&#xE77B;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                                    <Run Text="Joining as" />
+                                                    <Run x:Name="JoinAsName" FontWeight="SemiBold" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                </TextBlock>
+                                                <HyperlinkButton Content="Change" Padding="4,0" Click="GoSettings_Click" />
+                                            </StackPanel>
+                                            <Button x:Name="JoinButton" HorizontalAlignment="Right" MinWidth="140" IsEnabled="False"
+                                                    Style="{StaticResource AccentButtonStyle}" Click="Join_Click">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <ProgressRing x:Name="JoinRing" IsActive="False" Width="14" Height="14" Visibility="Collapsed" />
+                                                    <TextBlock x:Name="JoinLabel" Text="Join party" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="How it works" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <Border CornerRadius="8" Background="{ThemeResource HeroBackgroundBrush}" BorderThickness="1"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                    <Image x:Name="HeroImage" Stretch="Uniform" MaxHeight="230" Margin="12,8"
+                                           AutomationProperties.Name="Your PC, the host and the other players joined into one LAN through a relay" />
+                                </Border>
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource Tile}" Padding="16,14">
+                                            <StackPanel Spacing="6">
+                                                <local:Step Number="1" Text="Get an invite code" />
+                                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           Text="From a friend who hosts on a NetKey box, or pick a public party." Margin="36,0,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Column="1" Style="{StaticResource Tile}" Padding="16,14">
+                                            <StackPanel Spacing="6">
+                                                <local:Step Number="2" Text="The host lets you in" />
+                                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           Text="They see your name and a key check, then approve you." Margin="36,0,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Column="2" Style="{StaticResource Tile}" Padding="16,14">
+                                            <StackPanel Spacing="6">
+                                                <local:Step Number="3" Text="Play" />
+                                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           Text="Start your game in the emulator and choose network play: IPX, NetBEUI, TCP/IP." Margin="36,0,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Style="{StaticResource DefaultButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                            Padding="18,16" Click="GoFind_Click">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Glyph="&#xE721;" FontSize="22" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Text="Find a public party" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                                <TextBlock Text="Open parties anyone can ask to join" TextWrapping="Wrap"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                    <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="18,16" Click="GoEmulators_Click">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Glyph="&#xE7FC;" FontSize="22" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Text="Connect an emulator" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                                <TextBlock Text="One-time setup for VMware, DOSBox-X, 86Box…" TextWrapping="Wrap"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </Grid>
+                                <Border Style="{StaticResource Card}" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image x:Name="TeaserIcon" Width="40" Height="40" VerticalAlignment="Top" />
+                                        <StackPanel Grid.Column="1" Spacing="4">
+                                            <TextBlock Text="Want to host your own LAN party?" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       Text="Hosting runs on a NetKey box: a Raspberry Pi with NetKey. Plug in your real retro PCs, send friends a code, and approve them as they arrive. Free." />
+                                        </StackPanel>
+                                        <HyperlinkButton Grid.Column="2" VerticalAlignment="Center" NavigateUri="https://netkey.no">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="Get NetKey for Pi" />
+                                                <FontIcon Glyph="&#xE8A7;" FontSize="12" />
+                                            </StackPanel>
+                                        </HyperlinkButton>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- waiting for the host -->
+                            <Border x:Name="WaitView" Style="{StaticResource Card}" Padding="28" Visibility="Collapsed">
+                                <StackPanel Spacing="18">
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <ProgressRing IsActive="True" Width="28" Height="28" />
+                                        <StackPanel>
+                                            <TextBlock x:Name="WaitTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                                       Text="Your request is with the host. This page moves on by itself as soon as they let you in." />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="8" Padding="18,14">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="KEY CHECK" Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" CharacterSpacing="80" />
+                                            <TextBlock x:Name="KeyCheck" FontFamily="Cascadia Mono, Consolas" FontSize="28"
+                                                       FontWeight="SemiBold" IsTextSelectionEnabled="True" CharacterSpacing="60" />
+                                            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       Text="The host sees this next to your name. If they ask, read it out to prove the request is yours." />
+                                        </StackPanel>
+                                    </Border>
+                                    <Button Content="Cancel request" Click="Leave_Click" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- in the party -->
+                            <StackPanel x:Name="PartyView" Spacing="16" Visibility="Collapsed">
+                                <Border Style="{StaticResource Card}" Padding="24">
+                                    <StackPanel Spacing="18">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="8">
+                                                <Border x:Name="Chip" CornerRadius="12" Padding="10,3" HorizontalAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                        <Ellipse x:Name="ChipDot" Width="8" Height="8" VerticalAlignment="Center" />
+                                                        <TextBlock x:Name="ChipText" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <TextBlock x:Name="PartyTitle" Style="{StaticResource TitleLargeTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock x:Name="PartyLine" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" VerticalAlignment="Top" Click="Leave_Click">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon Glyph="&#xE89B;" FontSize="14" />
+                                                    <TextBlock Text="Leave" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Style="{StaticResource Tile}">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Ping to host" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    <TextBlock x:Name="StatPing" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource Tile}">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Players" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    <TextBlock x:Name="StatPlayers" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Grid.Column="2" Style="{StaticResource Tile}">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Relay" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    <TextBlock x:Name="StatRelay" Style="{StaticResource SubtitleTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel Spacing="12">
+                                        <Grid>
+                                            <TextBlock Text="Your emulators" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                            <HyperlinkButton Content="Setup help" HorizontalAlignment="Right" Padding="4,0" Click="GoEmulators_Click" />
+                                        </Grid>
+                                        <Grid ColumnSpacing="12" RowSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition />
+                                                <RowDefinition />
+                                            </Grid.RowDefinitions>
+                                            <FontIcon Glyph="&#xE839;" FontSize="18" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="NetKey Adapter" />
+                                                <TextBlock Text="VMware, VirtualBox, DOSBox-X" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Ellipse x:Name="TapDot" Width="8" Height="8" VerticalAlignment="Center" />
+                                                <TextBlock x:Name="TapState" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <FontIcon Grid.Row="1" Glyph="&#xE7F4;" FontSize="18" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Row="1" Grid.Column="1">
+                                                <TextBlock Text="86Box Local Switch" />
+                                                <TextBlock Text="86Box, QEMU" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Ellipse x:Name="LsDot" Width="8" Height="8" VerticalAlignment="Center" />
+                                                <TextBlock x:Name="LsState" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Players" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                        <StackPanel x:Name="Members" />
+                                        <TextBlock x:Name="FilesText" TextWrapping="Wrap" Visibility="Collapsed" IsTextSelectionEnabled="True"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,6,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="Connection test" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                            <TextBlock x:Name="TestText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       Text="A test PC joins the party's network, gets an address and pings the host with small and full-size packets." />
+                                        </StackPanel>
+                                        <Button x:Name="TestButton" Grid.Column="1" VerticalAlignment="Center" Click="Test_Click" MinWidth="110">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <ProgressRing x:Name="TestRing" IsActive="False" Width="14" Height="14" Visibility="Collapsed" />
+                                                <TextBlock x:Name="TestLabel" Text="Run test" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <Border x:Name="NarrowChatHost" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Border x:Name="WideChatHost" Grid.Column="1" Padding="0,20,24,24" />
+                </Grid>
+
+                <!-- chat card (moved between the narrow and wide spots in code) -->
+                <Border x:Name="ChatCard" Style="{StaticResource Card}" Padding="0" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid Padding="18,14" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon Glyph="&#xE8BD;" FontSize="16" />
+                                <TextBlock Text="Party chat" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="1">
+                            <ScrollViewer x:Name="ChatScroll" Padding="0,8" HorizontalScrollMode="Disabled">
+                                <StackPanel x:Name="ChatPanel" />
+                            </ScrollViewer>
+                            <StackPanel x:Name="ChatEmpty" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Padding="24">
+                                <FontIcon Glyph="&#xE8BD;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Text="No messages yet" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="Say hi, or ask what's next on the menu." HorizontalAlignment="Center"
+                                           Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Grid.Row="2" Padding="14" Spacing="6" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="ChatBox" PlaceholderText="Message the party" MaxLength="300" KeyDown="ChatBox_KeyDown" />
+                                <Button x:Name="ChatSend" Grid.Column="1" Style="{StaticResource AccentButtonStyle}" Click="ChatSend_Click"
+                                        ToolTipService.ToolTip="Send (Enter)">
+                                    <FontIcon Glyph="&#xE724;" FontSize="14" />
+                                </Button>
+                            </Grid>
+                            <TextBlock x:Name="ChatWhy" Visibility="Collapsed" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ================= FIND A PARTY ================= -->
+                <ScrollViewer x:Name="FindPage" Padding="32,20,32,32" Visibility="Collapsed">
+                    <StackPanel x:Name="FindColumn" Spacing="16" MaxWidth="900" HorizontalAlignment="Center">
+                        <Grid>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Find a party" Style="{StaticResource TitleTextBlockStyle}" />
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                           Text="Public parties anyone with NetKey can ask to join. The nearest ones come first." />
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="Refresh_Click" ToolTipService.ToolTip="Refresh">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                                    <TextBlock Text="Refresh" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <InfoBar x:Name="BanBar" Visibility="Collapsed" Severity="Error" IsClosable="False" Title="This PC is banned from public parties" />
+                        <InfoBar x:Name="FindError" Visibility="Collapsed" Severity="Error" Closed="Bar_Closed" />
+
+                        <!-- nickname gate -->
+                        <Border x:Name="NickGate" Style="{StaticResource Card}" Padding="24" Visibility="Collapsed">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <FontIcon Glyph="&#xE77B;" FontSize="22" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Choose a nickname first" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                </StackPanel>
+                                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Public parties show your nickname to the host and in the chat. 3 to 16 letters, digits, - or _. You can change it once every 30 days, and your old one stays reserved for 30 days." />
+                                <Grid ColumnSpacing="8" MaxWidth="480" HorizontalAlignment="Left">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="NickBox" MaxLength="16" PlaceholderText="Nickname" TextChanged="NickBox_TextChanged" MinWidth="260" />
+                                    <Button x:Name="NickSave" Grid.Column="1" Content="Use this nickname" Style="{StaticResource AccentButtonStyle}"
+                                            IsEnabled="False" Click="NickSave_Click" />
+                                </Grid>
+                                <TextBlock x:Name="NickHint" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock x:Name="LiveHeader" Text="Live now" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,8,0,0" />
+                        <ProgressRing x:Name="FindRing" IsActive="False" Visibility="Collapsed" HorizontalAlignment="Left" Width="24" Height="24" />
+                        <StackPanel x:Name="LiveEmpty" Visibility="Collapsed" Spacing="4" Padding="0,8">
+                            <TextBlock Text="No public parties right now." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Check the upcoming events below, or ask a friend for an invite code." Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                        </StackPanel>
+                        <StackPanel x:Name="LiveList" Spacing="10" />
+
+                        <TextBlock x:Name="UpcomingHeader" Text="Upcoming events" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,12,0,0" Visibility="Collapsed" />
+                        <StackPanel x:Name="UpcomingList" Spacing="8" />
+                        <TextBlock x:Name="UpcomingNote" Visibility="Collapsed" Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   Text="Events open for joining when their host starts them; they show up under Live now." />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ================= EMULATORS ================= -->
+                <ScrollViewer x:Name="EmuPage" Padding="32,20,32,32" Visibility="Collapsed">
+                    <StackPanel x:Name="EmuColumn" Spacing="12" MaxWidth="820" HorizontalAlignment="Center">
+                        <TextBlock Text="Emulators" Style="{StaticResource TitleTextBlockStyle}" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,0,0,8"
+                                   Text="Set this up once per emulator. Whenever you're in a party NetKey connects it; outside a party it looks like an unplugged cable." />
+
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="True">
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE7F8;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="VMware Workstation" />
+                                        <TextBlock Text="Bridge a virtual network to the NetKey Adapter" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <local:Step Number="1" Text="Edit → Virtual Network Editor → Change Settings." />
+                                <local:Step Number="2" Text="Add Network… (for example VMnet2), choose Bridged, and under “Bridged to” pick NetKey Adapter, not Automatic." />
+                                <local:Step Number="3" Text="If VMnet0 is set to Automatic, open Automatic Settings and untick NetKey Adapter, so your other VMs stay off the party." />
+                                <local:Step Number="4" Text="In the VM's settings: Network Adapter → Custom → VMnet2. The VM gets its address from the party host." />
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE7F8;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="VirtualBox" />
+                                        <TextBlock Text="Bridged adapter on the NetKey Adapter" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <local:Step Number="1" Text="Settings → Network → Adapter 1 → Attached to: Bridged Adapter." />
+                                <local:Step Number="2" Text="Name: NetKey Adapter. For Windows 9x guests, choose the PCnet-FAST III card under Advanced." />
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE756;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="DOSBox-X" />
+                                        <TextBlock Text="NE2000 card through Npcap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                    <Border x:Name="NpcapChip" Grid.Column="2" CornerRadius="10" Padding="10,2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="NpcapChipText" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <InfoBar x:Name="NpcapBar" IsClosable="False" Visibility="Collapsed" />
+                                <local:Step Number="1" Text="Add this to your dosbox-x.conf. The MAC address is made for this PC: every DOSBox-X ships with the same one, and two of them in a party can't see each other." />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="DosboxConf" Style="{StaticResource Mono}" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Click="CopyDosbox_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+                                <local:Step Number="2" Text="In DOS, load the NE2000 packet driver: NE2000 0x60 10 0x300 (Crynwr packet drivers). IPX games and mTCP work on top of it." />
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE7F4;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="86Box" />
+                                        <TextBlock Text="Local Switch, nothing else to install" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <local:Step Number="1" Text="Settings → Network → Mode: Local Switch." />
+                                <local:Step Number="2" Text="Shared secret: paste this. It keeps your switch apart from other 86Box users on your home network." />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="SecretText" Style="{StaticResource Mono}" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8" Click="CopySecret_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ================= SETTINGS ================= -->
+                <ScrollViewer x:Name="SettingsPage" Padding="32,20,32,32" Visibility="Collapsed">
+                    <StackPanel x:Name="SettingsColumn" Spacing="8" MaxWidth="820" HorizontalAlignment="Center">
+                        <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,12" />
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Name for private parties" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Friends who host a party with an invite code see this name. Change it any time." />
+                                <Grid ColumnSpacing="8" HorizontalAlignment="Left">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="NameBox" MaxLength="32" TextChanged="NameBox_TextChanged" />
+                                    <Button x:Name="SaveName" Grid.Column="1" Content="Save" IsEnabled="False" Click="SaveName_Click" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Nickname for public parties" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Name="NickInfo" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <Grid ColumnSpacing="8" HorizontalAlignment="Left">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="NickEdit" MaxLength="16" TextChanged="NickEdit_TextChanged" />
+                                    <Button x:Name="NickChange" Grid.Column="1" Content="Change" IsEnabled="False" Click="NickChange_Click" />
+                                </Grid>
+                                <TextBlock x:Name="NickEditHint" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="When I close the window" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <RadioButtons x:Name="CloseChoice" SelectionChanged="CloseChoice_SelectionChanged">
+                                    <x:String>Keep NetKey in the notification area</x:String>
+                                    <x:String>Quit NetKey</x:String>
+                                </RadioButtons>
+                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Your party keeps running either way: the NetKey service works in the background. The notification area icon brings the window back and tells you about new chat messages." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Service" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock x:Name="ServiceText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Open log folder" VerticalAlignment="Center" Click="OpenLogs_Click" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="About" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock x:Name="AboutText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <HyperlinkButton Content="netkey.no" NavigateUri="https://netkey.no" Padding="0,4" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </NavigationView>
+    </Grid>
+</Window>

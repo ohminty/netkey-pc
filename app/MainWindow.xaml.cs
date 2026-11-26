@@ -282,6 +282,7 @@ public sealed partial class MainWindow : Window
         JoinAsName.Text = _savedName;
         _secret = s.Str("secret");
         SecretText.Text = _secret;
+        NetCfg.Text = "Link Driver NE2000\n    PORT 300\n    IRQ 10\n    FRAME Ethernet_802.2";
         DosboxConf.Text = "[ne2000]\nne2000=true\nnicbase=300\nnicirq=10\nmacaddr=" + s.Str("dosbox_mac") +
                           "\nbackend=pcap\n\n[ethernet, pcap]\nrealnic=NetKey";
 
@@ -885,4 +886,6 @@ public sealed partial class MainWindow : Window
     private void CopyDosbox_Click(object sender, RoutedEventArgs e) => Copy(DosboxConf.Text.Replace("\n", "\r\n"));
 
     private void CopySecret_Click(object sender, RoutedEventArgs e) => Copy(_secret);
+
+    private void CopyNetCfg_Click(object sender, RoutedEventArgs e) => Copy(NetCfg.Text.Replace("\n", "\r\n"));
 }

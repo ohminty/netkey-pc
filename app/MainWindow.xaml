@@ -465,6 +465,54 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE756;" FontSize="20" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="DOSBox-X" />
+                                        <TextBlock Text="NE2000 card through Npcap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                    <Border x:Name="NpcapChip" Grid.Column="2" CornerRadius="10" Padding="10,2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="NpcapChipText" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Spacing="12">
+                                <InfoBar x:Name="NpcapBar" IsClosable="False" Visibility="Collapsed" />
+                                <local:Step Number="1" Text="Add this to your dosbox-x.conf. The MAC address is made for this PC: every DOSBox-X ships with the same one, and two of them in a party can't see each other." />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="DosboxConf" Style="{StaticResource Mono}" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Click="CopyDosbox_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+<local:Step Number="2" Text="For IPX games (Doom, Duke Nukem 3D, Warcraft II, Command &amp; Conquer…), DOS needs Novell's IPX drivers: LSL.COM, NE2000.COM (Novell's ODI driver) and IPXODI.COM, from the NetWare DOS Client. The DOSBox-X networking guide shows where to get them. Put this NET.CFG next to LSL.COM:" />
+                                <Grid>
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                        <TextBlock x:Name="NetCfg" Style="{StaticResource Mono}" />
+                                    </Border>
+                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Click="CopyNetCfg_Click" ToolTipService.ToolTip="Copy">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                    </Button>
+                                </Grid>
+                                <local:Step Number="3" Text="Load them in this order, then start the game and choose an IPX network game:" />
+                                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
+                                    <TextBlock Style="{StaticResource Mono}" Text="LSL&#10;NE2000&#10;IPXODI" />
+                                </Border>
+                                <TextBlock TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="Everyone in the party should use the same IPX frame type (Ethernet_802.2 here), or their games won't see each other. For TCP/IP tools like mTCP, load DOSBox-X's built-in packet driver instead: NE2000 0x60 10 0x300." />
+                                <HyperlinkButton Content="DOSBox-X networking guide" Padding="0,4"
+                                                 NavigateUri="https://dosbox-x.com/wiki/Guide%3ASetting-up-networking-in-DOSBox%E2%80%90X" />
+                            </StackPanel>
+                        </Expander>
+                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" >
+                            <Expander.Header>
+                                <Grid ColumnSpacing="14" Padding="0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <FontIcon Glyph="&#xE7F8;" FontSize="20" VerticalAlignment="Center" />
                                     <StackPanel Grid.Column="1">
@@ -501,38 +549,6 @@
                             </StackPanel>
                         </Expander>
 
-                        <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                            <Expander.Header>
-                                <Grid ColumnSpacing="14" Padding="0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <FontIcon Glyph="&#xE756;" FontSize="20" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="DOSBox-X" />
-                                        <TextBlock Text="NE2000 card through Npcap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    </StackPanel>
-                                    <Border x:Name="NpcapChip" Grid.Column="2" CornerRadius="10" Padding="10,2" VerticalAlignment="Center">
-                                        <TextBlock x:Name="NpcapChipText" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" />
-                                    </Border>
-                                </Grid>
-                            </Expander.Header>
-                            <StackPanel Spacing="12">
-                                <InfoBar x:Name="NpcapBar" IsClosable="False" Visibility="Collapsed" />
-                                <local:Step Number="1" Text="Add this to your dosbox-x.conf. The MAC address is made for this PC: every DOSBox-X ships with the same one, and two of them in a party can't see each other." />
-                                <Grid>
-                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="14,12">
-                                        <TextBlock x:Name="DosboxConf" Style="{StaticResource Mono}" />
-                                    </Border>
-                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Click="CopyDosbox_Click" ToolTipService.ToolTip="Copy">
-                                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
-                                    </Button>
-                                </Grid>
-                                <local:Step Number="2" Text="In DOS, load the NE2000 packet driver: NE2000 0x60 10 0x300 (Crynwr packet drivers). IPX games and mTCP work on top of it." />
-                            </StackPanel>
-                        </Expander>
 
                         <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                             <Expander.Header>
